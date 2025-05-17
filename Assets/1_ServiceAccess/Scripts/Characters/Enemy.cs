@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 
 namespace Excercise1
@@ -19,15 +19,22 @@ namespace Excercise1
         protected override void OnEnable()
         {
             base.OnEnable();
-            //TODO: Get the reference to the player.
-            if (_player == null)
-                Debug.LogError($"{_logTag} Player not found!");
+
+            // ✅ Service Locator pattern
+            var characterService = ServiceLocator.GetService<CharacterService>();
+
+            // ✅ Buscar al Player por ID usando el servicio
+            if (!characterService.TryGetCharacter(playerId, out _player))
+            {
+                Debug.LogError($"{_logTag} Player with ID '{playerId}' not found!");
+            }
         }
 
         private void Update()
         {
             if (_player == null)
                 return;
+
             var direction = _player.transform.position - transform.position;
             transform.position += direction.normalized * (speed * Time.deltaTime);
         }
