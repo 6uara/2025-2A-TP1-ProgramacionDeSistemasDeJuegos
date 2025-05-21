@@ -13,7 +13,7 @@ namespace Excercise1
             {
                 if (_instance == null)
                 {
-                    _instance = FindObjectOfType<CharacterService>();
+                    _instance = FindFirstObjectByType<CharacterService>();
                     if (_instance == null)
                     {
                         GameObject go = new GameObject("CharacterService");

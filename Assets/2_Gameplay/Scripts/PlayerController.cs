@@ -10,6 +10,7 @@ namespace Gameplay
         [SerializeField] private InputActionReference moveInput;
         [SerializeField] private InputActionReference jumpInput;
         [SerializeField] private float airborneSpeedMultiplier = .5f;
+        [SerializeField] private int maxJumps = 2;
 
         private Character _character;
         private Coroutine _jumpCoroutine;
@@ -18,7 +19,7 @@ namespace Gameplay
         private void Awake()
         {
             _character = GetComponent<Character>();
-            _jumpState = new GroundedState(this);
+            _jumpState = new JumpState(this, maxJumps);
         }
 
         private void OnEnable()
@@ -29,6 +30,7 @@ namespace Gameplay
                 moveInput.action.performed += HandleMoveInput;
                 moveInput.action.canceled += HandleMoveInput;
             }
+
             if (jumpInput?.action != null)
                 jumpInput.action.performed += HandleJumpInput;
         }
@@ -37,9 +39,11 @@ namespace Gameplay
         {
             if (moveInput?.action != null)
             {
+                moveInput.action.started -= HandleMoveInput;
                 moveInput.action.performed -= HandleMoveInput;
                 moveInput.action.canceled -= HandleMoveInput;
             }
+
             if (jumpInput?.action != null)
                 jumpInput.action.performed -= HandleJumpInput;
         }
@@ -47,19 +51,13 @@ namespace Gameplay
         private void HandleMoveInput(InputAction.CallbackContext ctx)
         {
             var direction = ctx.ReadValue<Vector2>().ToHorizontalPlane();
-            direction *= IsAirborne() ? airborneSpeedMultiplier : 1f;
+            direction *= _jumpState.IsAirborne ? airborneSpeedMultiplier : 1f;
             _character.SetDirection(direction);
         }
 
         private void HandleJumpInput(InputAction.CallbackContext ctx)
         {
             _jumpState.HandleJump();
-        }
-
-        public void SetJumpState(IJumpState newState)
-        {
-            _jumpState = newState;
-            _jumpState.Enter();
         }
 
         public void RunJump()
@@ -73,16 +71,11 @@ namespace Gameplay
         {
             foreach (var contact in other.contacts)
             {
-                if (Vector3.Angle(contact.normal, Vector3.up) < 5)
+                if (Vector3.Angle(contact.normal, Vector3.up) < 5f)
                 {
                     _jumpState.OnLand();
                 }
             }
-        }
-
-        private bool IsAirborne()
-        {
-            return !(_jumpState is GroundedState);
         }
     }
 }
